@@ -6,30 +6,31 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Set;
 
-/**
- * /**
- *  * Write a simple web crawler in a programming language of your choice. The crawler should be limited to one domain
- *  * - so when crawling SEDNA.com it would :
- *  *
- *  *      crawl all pages within the domain, but not follow external links,
- *  *      for example to the LinkedIn and Twitter accounts. Given a URL, it should output a site map,
- *  * showing which static assets each page depends on, and the links between pages.
- *  */
 
 public class Crawler {
     private static final int MILLION_LINKS = 1000000;
+
+    private final String domain;
     private Set<String> linksVisited = new HashSet<>();
     // using a linked list enables to keep order of the next links to visit
     private List<String> linksToVisit = new LinkedList<>();
 
+    private LinkFinder linkFinder;
+
+    public Crawler(String domain) {
+        this.domain = domain;
+        this.linkFinder = new LinkFinder(domain);
+    }
+
     public static void main(String[] args) {
 
-        if (args == null || args.length < 0){
+        if (args == null || args.length == 0){
             System.out.println("ERROR: A domain is needed to crawl, ending");
             return;
         }
         String domain = args[0];
-        Crawler crawler = new Crawler();
+        Crawler crawler = new Crawler(domain);
+
         try {
             crawler.crawl(domain);
         } catch (IOException ioException) {
@@ -67,13 +68,15 @@ public class Crawler {
             if (urlToVisit == null) break;
 
             // finds next links to pages to visit
-            this.linksToVisit.addAll(LinkFinder.findLinks(urlToVisit, domain));
+
+            this.linksToVisit.addAll(linkFinder.findInternalLinks(urlToVisit));
 
         }while (linksToVisit.size() > 0 && this.linksVisited.size() < MILLION_LINKS);
 
         System.out.format("Visited %s links and resources%n%n", linksVisited.size());
-        linksVisited.stream()
-               .forEach(System.out::println);
+        for (String s : linksVisited) {
+            System.out.println(s);
+        }
     }
 
 
